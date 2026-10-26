@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>契約書作成・電子署名（ビジネス／プライベート／借用書）</title>
+    
+    <!-- Leaflet.js CSS/JS (マップ機能：APIキー不要・無料) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --primary-color: #1e3c72;
+            --primary-hover: #162b52;
+            --accent-color: #e74c3c;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dcdfe6;
+            --light-bg: #f8fafc;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.12);
+            --radius-lg: 16px;
+            --radius-md: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px 10px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ヘッダー */
+        .app-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 28px 20px;
+            text-align: center;
+        }
+
+        .app-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .app-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* ステップナビゲーション */
+        .stepper {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .step-item {
+            flex: 1;
+            text-align: center;
+            padding: 14px 8px;
+            font-size: 0.88rem;
+            color: #909399;
+            font-weight: 600;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .step-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background-color: var(--primary-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .step-item.active {
+            color: var(--primary-color);
+            background: #f4f8ff;
+        }
+
+        .step-item.active::after {
+            width: 100%;
+        }
+
+        /* ステップコンテンツ */
+        .step-content {
+            display: none;
+            padding: 32px 28px;
+        }
+
+        .step-content.active {
+            display: block;
+            animation: slideIn 0.35s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        h2.section-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            border-left: 6px solid var(--primary-color);
+            padding-left: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* 規約ボックス */
+        .terms-box {
+            height: 360px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            background: var(--light-bg);
+            padding: 22px;
+            border-radius: var(--radius-md);
+            font-size: 0.92rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .terms-box h3 {
+            font-size: 1.1rem;
+            margin: 16px 0 8px 0;
+            color: #111;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 4px;
+        }
+
+        .terms-box h3:first-child {
+            margin-top: 0;
+        }
+
+        .terms-box ol {
+            padding-left: 22px;
+            margin-bottom: 12px;
+        }
+
+        .consent-check-group {
+            background: #eef5ff;
+            border: 1.5px solid #a0c4ff;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 22px;
+        }
+
+        .consent-check-group label {
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e3c72;
+            cursor: pointer;
+        }
+
+        .consent-check-group input[type="checkbox"] {
+            width: 19px;
+            height: 19px;
+            margin-right: 10px;
+            accent-color: var(--primary-color);
+        }
+
+        /* フォームグループ */
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.94rem;
+        }
+
+        .form-group label .required {
+            color: var(--accent-color);
+            margin-left: 4px;
+        }
+
+        .input-with-btn {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-with-btn input {
+            flex: 1;
+        }
+
+        .btn-map {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+
+        .btn-map:hover {
+            background: #1d4ed8;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.96rem;
+            transition: all 0.2s;
+            background-color: #fff;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.12);
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .checkbox-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 0.92rem;
+        }
+
+        .checkbox-card input[type="checkbox"] {
+            width: 17px;
+            height: 17px;
+            margin-right: 8px;
+            accent-color: var(--primary-color);
+        }
+
+        /* 署名キャンバス */
+        .signature-block {
+            background: #fafbfc;
+            border: 2px dashed #b0c4de;
+            border-radius: var(--radius-md);
+            padding: 14px;
+            margin-top: 8px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 170px;
+            background: #ffffff;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            touch-action: none;
+        }
+
+        canvas.sig-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .canvas-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .signature-tools {
+            margin-top: 8px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-tool {
+            background-color: #edf2f7;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+            padding: 5px 12px;
+            font-size: 0.82rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* アクションボタン */
+        .btn-group {
+            margin-top: 28px;
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 32px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(30, 60, 114, 0.25);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+        }
+
+        /* モーダル（マップ指定用） */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 700px;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        #map-container {
+            width: 100%;
+            height: 320px;
+            border-radius: var(--radius-md);
+            border: 1px solid #ccc;
+        }
+
+        .map-address-preview {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            border: 1px solid #e2e8f0;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* ==================== A4 印刷・PDFレイアウトの徹底最適化 ==================== */
+        .preview-outer {
+            display: flex;
+            justify-content: center;
+            background: #e2e8f0;
+            padding: 20px 10px;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+        }
+
+        /* 
+           A4の正確な縦横比 (210mm x 297mm) 
+           PDF出力時・印刷時の要素くずれ防止用ルール 
+        */
+        .contract-paper {
+            width: 210mm;
+            min-height: 297mm;
+            height: auto;
+            padding: 18mm 16mm 16mm 16mm;
+            background: #ffffff;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS Mincho", "Shippori Mincho", serif;
+            color: #111;
+            line-height: 1.6;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow: visible;
+        }
+
+        .contract-header-title {
+            text-align: center;
+            font-size: 1.75rem;
+            font-weight: bold;
+            letter-spacing: 0.2em;
+            margin-bottom: 20px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #222;
+        }
+
+        .contract-p {
+            margin-bottom: 12px;
+            text-indent: 1em;
+            text-align: justify;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .contract-section-heading {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        .contract-box {
+            border: 1px solid #333;
+            padding: 10px 14px;
+            margin: 10px 0 16px 0;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .contract-box-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            padding: 0;
+        }
+
+        .contract-box-list li {
+            font-size: 0.88rem;
+        }
+
+        .contract-date-display {
+            margin-top: 16px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        /* 署名表示欄（左右レイアウト） */
+        .parties-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .party-cell {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 8px;
+        }
+
+        .party-card {
+            border-top: 2px solid #222;
+            padding-top: 8px;
+        }
+
+        .party-role-badge {
+            font-size: 0.85rem;
+            font-weight: bold;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            display: inline-block;
+            margin-bottom: 8px;
+            border-radius: 2px;
+        }
+
+        .party-info-row {
+            font-size: 0.88rem;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .party-sig-area {
+            margin-top: 8px;
+            height: 65px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px dashed #888;
+            padding-bottom: 2px;
+        }
+
+        .sig-image-render {
+            max-height: 60px;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        /* PDF出力専用レイアウト */
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            html, body {
+                width: 210mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body.printing-contract .container {
+                width: 210mm !important;
+                max-width: none !important;
+                margin: 0 !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+            }
+            body.printing-contract .app-header,
+            body.printing-contract .stepper,
+            body.printing-contract #step1,
+            body.printing-contract #step2,
+            body.printing-contract #step3 > .no-print,
+            body.printing-contract .btn-group,
+            body.printing-contract .no-print {
+                display: none !important;
+            }
+            body.printing-contract #step3 {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            body.printing-contract .preview-outer {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+                background: #fff !important;
+            }
+            body.printing-contract #pdf-target {
+                display: flex !important;
+                width: 210mm !important;
+                min-height: 297mm !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 15mm !important;
+                box-shadow: none !important;
+                border: 0 !important;
+                overflow: visible !important;
+                page-break-after: auto !important;
+                break-inside: auto !important;
+            }
+            body.printing-contract .parties-table,
+            body.printing-contract .party-card,
+            body.printing-contract .contract-box {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+        }
+
+        /* ブラウザ印刷（Ctrl+P）時の設定 */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+            .app-header, .stepper, .btn-group, .no-print, .preview-outer {
+                display: none !important;
+            }
+            .step-content {
+                display: block !important;
+                padding: 0 !important;
+            }
+            #step1, #step2 {
+                display: none !important;
+            }
+            #step3 {
+                display: block !important;
+            }
+            .contract-paper {
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 210mm !important;
+                min-height: 297mm !important;
+                height: auto !important;
+                padding: 15mm 15mm !important;
+                overflow: visible !important;
+                page-break-after: auto !important;
+                page-break-inside: auto !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+        }
+
+
+        /* ===== Responsive UI: phone / tablet / desktop ===== */
+        .field-help { margin-top: 6px; color: #555; font-size: .86rem; }
+        .step-content { min-width: 0; }
+        .terms-box { height: min(52vh, 520px); min-height: 260px; }
+        .canvas-wrapper { height: 220px; }
+        .signature-block { padding: 12px; }
+        .btn, .btn-map, .btn-tool { min-height: 44px; }
+        input, button, select, textarea { font: inherit; }
+        .form-control { min-height: 46px; }
+        .purpose-preview { font-size: .95rem; line-height: 1.65; overflow-wrap: anywhere; }
+        .contract-terms-print { height: auto !important; max-height: none !important; overflow: visible !important; border: 0 !important; background: #fff !important; box-shadow: none !important; padding: 0 !important; margin: 16px 0 10px !important; font-size: .9rem !important; line-height: 1.65 !important; }
+        .contract-terms-print h3 { color: #000 !important; border-bottom: 1px solid #777 !important; margin: 13px 0 5px !important; padding-bottom: 3px !important; font-size: .98rem !important; break-after: avoid; }
+        .contract-terms-print p, .contract-terms-print li { color: #000 !important; }
+        .contract-terms-print ol { padding-left: 1.5em !important; }
+        .contract-box { break-inside: avoid; }
+        .contract-p, .contract-section-heading, .party-info-row { overflow-wrap: anywhere; }
+
+        @media screen and (max-width: 700px) {
+            body { padding: 0; background: #fff; }
+            .container { width: 100%; max-width: none; border-radius: 0; box-shadow: none; }
+            .app-header { padding: 20px 14px; }
+            .app-header h1 { font-size: 1.25rem; letter-spacing: .02em; }
+            .app-header p { font-size: .78rem; }
+            .stepper { position: sticky; top: 0; z-index: 50; }
+            .step-item { padding: 11px 3px; font-size: .72rem; line-height: 1.4; }
+            .step-content { padding: 22px 16px 28px; }
+            h2.section-title { font-size: 1.12rem; margin-bottom: 16px; }
+            .terms-box { height: 48vh; min-height: 250px; padding: 16px 14px; font-size: .9rem; }
+            .terms-box h3 { font-size: 1rem; }
+            .consent-check-group { padding: 14px; }
+            .consent-check-group label { align-items: flex-start; line-height: 1.55; }
+            .consent-check-group input[type="checkbox"] { flex: 0 0 22px; width: 22px; height: 22px; margin-top: 1px; }
+            .checkbox-grid { grid-template-columns: 1fr; gap: 8px; }
+            .checkbox-card { min-height: 46px; padding: 11px 12px; }
+            .checkbox-card input[type="checkbox"] { width: 20px; height: 20px; flex: 0 0 20px; }
+            .input-with-btn { flex-direction: column; }
+            .btn-map { width: 100%; justify-content: center; }
+            .canvas-wrapper { height: 230px; }
+            .signature-block { padding: 9px; }
+            .signature-tools { justify-content: stretch; }
+            .btn-tool { width: 100%; min-height: 44px; }
+            .btn-group { flex-direction: column-reverse; gap: 10px; margin-top: 22px; }
+            .btn-group .btn { width: 100%; min-height: 48px; }
+            .preview-outer { padding: 0; overflow: visible; background: #fff; }
+            .contract-paper { width: 100%; min-height: 0; padding: 22px 18px; box-shadow: none; font-size: .9rem; }
+            .contract-header-title { font-size: 1.35rem; letter-spacing: .12em; margin-bottom: 16px; }
+            .contract-box-list { grid-template-columns: 1fr; }
+            .parties-table, .parties-table tbody, .parties-table tr, .parties-table td { display: block; width: 100%; }
+            .party-cell { padding: 0; margin-top: 18px; }
+            .party-card { padding: 12px 4px 0; }
+            .party-sig-area { height: 58px; }
+            .modal-overlay { padding: 8px; }
+            .modal-content { max-height: 94dvh; overflow-y: auto; padding: 14px; }
+            #map-container { height: 42dvh; min-height: 220px; }
+        }
+
+        @media screen and (min-width: 701px) and (max-width: 1100px) {
+            body { padding: 14px; }
+            .container { max-width: 100%; }
+            .step-content { padding: 28px 26px; }
+            .canvas-wrapper { height: 250px; }
+            .contract-paper { width: min(100%, 210mm); }
+            .preview-outer { overflow-x: auto; }
+        }
+
+        @media screen and (min-width: 1101px) {
+            .container { max-width: 1100px; }
+            .canvas-wrapper { height: 250px; }
+        }
+
+        /* PDFは白黒・高コントラスト。ページ数は内容に応じて自動 */
+        @media print {
+            html, body { background: #fff !important; color: #000 !important; }
+            body.printing-contract #pdf-target,
+            .contract-paper { color: #000 !important; background: #fff !important; }
+            body.printing-contract .contract-box,
+            .contract-box { background: #fff !important; border: 1px solid #555 !important; }
+            body.printing-contract .party-role-badge,
+            .party-role-badge { background: #fff !important; color: #000 !important; border: 1px solid #777 !important; }
+            body.printing-contract .contract-header-title,
+            .contract-header-title { border-bottom: 2px solid #000 !important; }
+            body.printing-contract .party-card,
+            .party-card { border-color: #000 !important; }
+            body.printing-contract .party-sig-area,
+            .party-sig-area { border-bottom: 1px solid #555 !important; }
+            body.printing-contract .contract-paper { font-size: 10.5pt !important; }
+            body.printing-contract .contract-p { font-size: 10pt !important; line-height: 1.65 !important; }
+            body.printing-contract .contract-section-heading { font-size: 11pt !important; }
+            body.printing-contract .contract-terms-print { height: auto !important; max-height: none !important; overflow: visible !important; font-size: 9.5pt !important; line-height: 1.55 !important; }
+            body.printing-contract .contract-terms-print h3 { font-size: 10pt !important; break-after: avoid !important; }
+            body.printing-contract .contract-box-list { grid-template-columns: 1fr 1fr !important; }
+            body.printing-contract .parties-table { display: table !important; }
+            body.printing-contract .party-cell { display: table-cell !important; width: 50% !important; }
+            body.printing-contract .contract-paper { min-height: 0 !important; }
+            body.printing-contract .contract-box,
+            body.printing-contract .party-card,
+            body.printing-contract .parties-table { break-inside: avoid; page-break-inside: avoid; }
+        }
+
+    
+        /* 署名・監査記録パネル */
+        .evidence-panel { margin: 22px 0; padding: 18px; border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; color: #172033; }
+        .evidence-panel h3 { margin-bottom: 8px; font-size: 1.12rem; }
+        .evidence-warning { padding: 10px 12px; margin: 8px 0 14px; border-left: 4px solid #b45309; background: #fff7ed; color: #7c2d12; font-size: .88rem; line-height: 1.65; }
+        .evidence-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+        .evidence-card { min-width: 0; display: flex; flex-direction: column; gap: 9px; padding: 13px; border: 1px solid #d8dee8; border-radius: 9px; background: #fff; }
+        .evidence-card p { font-size: .84rem; line-height: 1.6; color: #475569; flex: 1; }
+        .evidence-card input[type=file] { width: 100%; font-size: .8rem; }
+        .evidence-card button { width: 100%; min-height: 42px; }
+        .hash-output { display: block; overflow-wrap: anywhere; padding: 8px; min-height: 38px; background: #f1f5f9; border-radius: 6px; font:  .76rem/1.5 ui-monospace,monospace; }
+        .evidence-meta { margin-top: 12px; color: #475569; font-size: .8rem; overflow-wrap: anywhere; }
+        @media (max-width: 760px) { .evidence-grid { grid-template-columns: 1fr; } .evidence-panel { padding: 12px; } }
+        @media (min-width: 761px) and (max-width: 1050px) { .evidence-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+
+    
+        /* A4 1枚の簡潔な契約書レイアウト */
+        .contract-paper { padding: 10mm 13mm !important; min-height: 297mm; height: auto; justify-content: flex-start; gap: 0; }
+        .paper-main { flex: 0 0 auto; }
+        .contract-header-title { font-size: 19pt; letter-spacing: .18em; margin-bottom: 5mm; padding-bottom: 2mm; border-bottom: 1.2px solid #111; }
+        .contract-p { font-size: 9.2pt; line-height: 1.55; margin: 0 0 3mm; text-indent: 1em; }
+        .contract-section-heading { font-size: 11pt; margin: 3mm 0 1.5mm; border-bottom: 1px solid #444; padding-bottom: 1mm; }
+        .contract-box { background: #fff !important; border: 1px solid #555; border-radius: 0; padding: 2.5mm 3mm; margin: 2mm 0 3mm; }
+        .paper-field-label { font-weight: bold; font-size: 9pt; margin-bottom: 1mm; }
+        .purpose-preview { font-size: 9.5pt; line-height: 1.45; min-height: 7mm; }
+        #preview-items-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1mm 5mm; padding: 0; margin: 0; }
+        #preview-items-list li { font-size: 9pt; margin: 0; }
+        #preview-items-list li, .paper-consent { font-family: "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif; }
+        .paper-commitment { margin-top: 2mm; }
+        .paper-consent { font-size: 9pt; margin: 2mm 0; }
+        .contract-date-display { text-align: right; font-size: 9.5pt; margin: 2mm 0 3mm; }
+        .paper-parties { display: grid; grid-template-columns: 1fr; gap: 3mm; margin-top: 1mm; }
+        .paper-party { border: 1px solid #555; padding: 2.5mm 3mm; break-inside: avoid; page-break-inside: avoid; }
+        .paper-party .party-role-badge { background: #eee !important; color: #111; border: 1px solid #555; border-radius: 0; font-size: 9.5pt; margin-bottom: 1.5mm; padding: 1mm 2mm; }
+        .paper-party-row { display: flex; align-items: baseline; gap: 2mm; min-height: 6mm; border-bottom: 1px dotted #aaa; font-size: 9pt; line-height: 1.35; }
+        .paper-party-row strong { flex: 0 0 25mm; }
+        .paper-party-row span { flex: 1; overflow-wrap: anywhere; }
+        .paper-signature-row { display: flex; align-items: center; gap: 2mm; font-size: 9pt; margin-top: 1mm; }
+        .paper-signature-row > strong { flex: 0 0 25mm; }
+        .paper-signature-row .party-sig-area { flex: 1; margin: 0; height: 14mm; border-bottom: 1px solid #777; padding: 0; }
+        .paper-signature-row .sig-image-render { max-height: 13mm; max-width: 100%; }
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body.printing-contract .contract-paper { width: 210mm !important; height: 297mm !important; min-height: 297mm !important; max-height: 297mm !important; padding: 9mm 12mm !important; overflow: hidden !important; }
+            body.printing-contract .paper-party { break-inside: avoid !important; page-break-inside: avoid !important; }
+            body.printing-contract .contract-terms-print, body.printing-contract #preview-full-terms { display: none !important; }
+            body.printing-contract .contract-paper, body.printing-contract .contract-paper * { color: #111 !important; background-color: #fff !important; box-shadow: none !important; }
+            body.printing-contract .party-role-badge { background: #eee !important; }
+        }
+
+    @media print {
+        body.printing-private #pdf-target,
+        body.printing-loan #pdf-target { display: block !important; }
+        .private-print, .loan-print { color:#111; font-family:"Yu Gothic","Meiryo",sans-serif; font-size:10pt; line-height:1.5; }
+        .private-print h1, .loan-print h1 { text-align:center; font-size:17pt; margin:0 0 12px; }
+        .private-print h3 { font-size:11pt; margin:10px 0 3px; border-bottom:1px solid #777; }
+        .private-print p, .private-print ol { margin:4px 0 7px; }
+        .private-print ol { padding-left:22px; }
+        .private-print li { margin:2px 0; }
+        .private-date { text-align:right; margin-top:16px !important; }
+        .private-parties, .loan-parties { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; page-break-inside:avoid; }
+        .private-parties section, .loan-parties section { border:1px solid #777; padding:9px; page-break-inside:avoid; }
+        .private-parties h3, .loan-parties h3 { margin:0 0 6px; }
+        .private-parties p, .loan-parties p { margin:4px 0; overflow-wrap:anywhere; }
+        .private-parties img, .loan-parties img { display:block; max-width:100%; width:180px; height:48px; object-fit:contain; }
+        .loan-print { font-size:11pt; }
+        .loan-intro { margin:18px 0; }
+        .loan-amount { border:2px solid #111; text-align:center; padding:14px; font-size:17pt; font-weight:700; margin:18px 0; }
+        .loan-print table { width:100%; border-collapse:collapse; margin:14px 0; }
+        .loan-print th, .loan-print td { border:1px solid #555; padding:9px; text-align:left; }
+        .loan-print th { width:28%; background:#f2f2f2; }
+        .loan-date { text-align:right; margin:18px 0; }
+        .loan-parties { margin-top:24px; }
+    }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ヘッダー -->
+    <div class="app-header">
+        <h1>機密保持契約書（電子署名）</h1>
+        <p>スマートフォン・タブレット・PC対応｜A4 1枚PDF対応</p>
+    </div>
+
+    <!-- ステップナビゲーション -->
+    <div class="stepper no-print">
+        <div class="step-item active" id="step-tab-1" onclick="if(canNavigateTo(1)) goToStep(1)">STEP 1<br>規約確認</div>
+        <div class="step-item" id="step-tab-2" onclick="if(canNavigateTo(2)) goToStep(2)">STEP 2<br>契約入力＆署名</div>
+        <div class="step-item" id="step-tab-3" onclick="if(canNavigateTo(3)) goToStep(3)">STEP 3<br>確認＆PDF保存</div>
+    </div>
+
+    <!-- ==================== STEP 1: 利用規約確認 ==================== -->
+    <div class="step-content active" id="step1">
+        <h2 class="section-title">契約書の種類を選択</h2>
+        <div class="form-section" style="margin-bottom:20px;">
+            <label for="document-type">作成する書類</label>
+            <select id="document-type" class="form-control" onchange="changeDocumentType()">
+                <option value="business">ビジネス用・相互秘密保持契約書</option>
+                <option value="private">プライベート用・秘密保持契約書</option>
+                <option value="loan">借用書（金銭消費貸借）</option>
+            </select>
+            <p class="field-help" id="document-type-help">ビジネス上の情報を相互に開示・受領する場合に使用します。既存の条項は変更していません。</p>
+        </div>
+        <h2 class="section-title" id="terms-heading">機密保持契約利用規約の確認</h2>
+        <p style="margin-bottom: 12px; font-size: 0.9rem; color: #555;">
+            契約を締結する前に、以下の「機密保持契約利用規約」全文を最後まで確認してください。
+        </p>
+
+        <div class="terms-box">
+            <h3 style="text-align:center; font-size:1.25rem; margin-bottom:16px;">相互秘密保持契約 条項</h3>
+            <p>本契約は、当事者Aおよび当事者B（以下、個別に「当事者」、総称して「両当事者」という）が、相互に情報を開示または受領する場合に適用する。情報を開示する当事者を「開示当事者」、受領する当事者を「受領当事者」といい、各当事者はその立場に応じて本契約上の権利および義務を負う。</p>
+
+            <h3>第1条（目的および利用範囲）</h3>
+            <ol>
+                <li>本契約は、両当事者間で行う協議、業務の検討・遂行、見積り、制作、開発、取引その他当事者が合意した目的（以下「本目的」という）に関連して開示される秘密情報を保護することを目的とする。</li>
+                <li>受領当事者は、秘密情報を本目的のためにのみ利用し、開示当事者の事前の書面または電磁的方法による承諾なく、目的外利用をしてはならない。</li>
+            </ol>
+
+            <h3>第2条（秘密情報）</h3>
+            <ol>
+                <li>「秘密情報」とは、本目的に関連して一方の当事者が他方に開示する技術上、営業上、業務上または個人的な情報であって、書面、口頭、画像、音声、物品、電子データ、チャット、電子メールその他媒体・方法を問わない情報をいう。秘密である旨の表示がある情報のほか、情報の性質または開示状況から秘密として扱うことが合理的な情報を含む。</li>
+                <li>秘密情報には、企画、価格、顧客・取引先情報、個人情報、アカウント情報、パスワード、ソースコード、設計・仕様、制作物、未公開情報、業務上の連絡・相談内容およびその複製物・要約物を含む。</li>
+                <li>口頭で開示された情報については、開示時に秘密である旨を伝え、開示後30日以内に内容を特定する書面または電磁的記録を送付するよう努める。ただし、性質上明らかに秘密と分かる情報はこの限りでない。</li>
+            </ol>
+
+            <h3>第3条（秘密情報から除外される情報）</h3>
+            <p>受領当事者が合理的な資料により立証できる次の情報は、秘密情報に含まれない。</p>
+            <ol>
+                <li>開示を受けた時点ですでに公知となっていた情報、または受領当事者が適法に保有していた情報</li>
+                <li>開示後、受領当事者の契約違反によらず公知となった情報</li>
+                <li>守秘義務を負うことなく、正当な権限を有する第三者から適法に取得した情報</li>
+                <li>秘密情報を利用せず、独自に開発または取得した情報</li>
+            </ol>
+
+            <h3>第4条（秘密保持および安全管理）</h3>
+            <ol>
+                <li>受領当事者は、秘密情報を善良な管理者の注意をもって管理し、開示当事者の事前承諾なく第三者に開示または漏えいしてはならない。</li>
+                <li>受領当事者は、本目的の遂行に必要な範囲でのみ秘密情報を複製・編集できる。複製物等にも本契約を適用する。</li>
+                <li>受領当事者は、秘密情報にアクセスする役員、従業員、業務委託先等を本目的に必要な者に限定し、本契約と同等以上の秘密保持義務を負わせ、その行為について責任を負う。</li>
+                <li>受領当事者は、秘密情報の漏えい、紛失、誤送信、不正アクセス等を防止するため、合理的な安全管理措置を講じる。</li>
+            </ol>
+
+            <h3>第5条（第三者開示および法令に基づく開示）</h3>
+            <ol>
+                <li>法令、裁判所または行政機関の適法な命令等により秘密情報の開示が必要となる場合、受領当事者は、法令上許される範囲で事前に開示当事者へ通知し、必要最小限の範囲で開示する。</li>
+                <li>前項を除き、第三者への開示には、開示当事者の事前の書面または電磁的方法による承諾を要する。</li>
+            </ol>
+
+            <h3>第6条（事故発生時の対応）</h3>
+            <p>受領当事者は、秘密情報の漏えい、紛失、毀損またはそのおそれを知った場合、速やかに開示当事者へ通知し、被害拡大の防止、原因調査、再発防止および合理的な範囲での復旧に協力する。</p>
+
+            <h3>第7条（返還・消去）</h3>
+            <ol>
+                <li>開示当事者から請求があった場合または本目的が終了した場合、受領当事者は、指示に従い秘密情報および複製物を返還または消去する。</li>
+                <li>法令上保存が必要な情報または通常のバックアップに残存し直ちに個別消去できない情報は、必要な期間に限り保存できる。この場合も本契約の秘密保持義務を継続し、通常の運用により消去する。</li>
+            </ol>
+
+            <h3>第8条（知的財産権等）</h3>
+            <p>秘密情報の開示は、特許権、著作権、商標権その他の知的財産権または利用許諾を移転・許諾するものではない。別途書面等で合意した場合を除き、秘密情報に関する権利は権利者に留保される。</p>
+
+            <h3>第9条（契約期間および秘密保持義務の存続）</h3>
+            <ol>
+                <li>本契約は、契約締結日から効力を生じ、いずれかの当事者が相手方に書面または電磁的方法で終了を通知するまで有効とする。</li>
+                <li>本契約終了後も、秘密保持義務は終了日から5年間存続する。ただし、不正競争防止法上の営業秘密その他性質上秘密として保護されるべき情報については、法令上保護される期間、義務を継続する。</li>
+            </ol>
+
+            <h3>第10条（損害賠償）</h3>
+            <p>当事者が本契約に違反し、相手方に損害を与えた場合、違反当事者は、民法その他適用法令に従い、違反行為と相当因果関係のある損害を賠償する責任を負う。損害の範囲および額は、個別の事情および法令に基づき判断される。</p>
+
+            <h3>第11条（反社会的勢力の排除）</h3>
+            <p>両当事者は、自らが反社会的勢力に該当せず、また反社会的勢力と社会的に非難されるべき関係を有しないことを表明し、保証する。これに反する事実が判明した場合、相手方は催告なく本契約を解除できる。</p>
+
+            <h3>第12条（協議・準拠法・合意管轄）</h3>
+            <ol>
+                <li>本契約は日本法に準拠する。本契約に定めのない事項または解釈に疑義が生じた場合、両当事者は誠実に協議して解決する。</li>
+                <li>本契約に関する紛争については、訴えを提起される当事者の住所地を管轄する地方裁判所または簡易裁判所を第一審の管轄裁判所とする。</li>
+            </ol>
+
+            <h3>第13条（契約の成立・変更）</h3>
+            <ol>
+                <li>本契約は、両当事者が内容を確認し、署名、記名押印または合意内容を確認できる電磁的方法により承諾した時点で成立する。</li>
+                <li>本契約の変更または追加は、両当事者が書面または電磁的方法で合意した場合に限り有効とする。</li>
+                <li>本契約の一部が法令等により無効と判断されても、その他の条項は可能な限り有効に存続する。</li>
+            </ol>
+        </div>
+
+        <div class="consent-check-group">
+            <label>
+                <input type="checkbox" id="terms-agree-check" onchange="toggleStep1Next()">
+                <span id="terms-consent-text">上記「機密保持契約利用規約」の全条項を確認し、すべて同意します。</span>
+            </label>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="btn-to-step2" disabled onclick="goToStep(2)">同意して次へ進む (STEP 2)</button>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 2: 契約情報・手書き署名入力 ==================== -->
+    <div class="step-content" id="step2">
+        <h2 class="section-title">契約内容の指定および手書き署名</h2>
+
+        <div id="step2-intro" style="background: #fff8e1; border-left: 5px solid #ffb300; padding: 14px; border-radius: 6px; margin-bottom: 20px; font-size: 0.9rem; color: #5d4037;">
+            <strong>相互契約：</strong> 当事者A・Bの双方が、情報を開示するときは開示当事者、受領するときは受領当事者となり、同じ義務を相互に負います。契約目的は具体的に記入してください。
+        </div>
+
+        <form id="contract-form" onsubmit="return false;">
+            <div class="form-section">
+                <label for="contract-purpose">契約の目的・対象業務 <span class="required">*</span></label>
+                <input type="text" id="contract-purpose" class="form-control" required maxlength="160" placeholder="例：Webサイト制作の相談・見積り・業務遂行に関する情報共有">
+                <p class="field-help">何のために情報を共有するのか、具体的に記入してください。</p>
+            </div>
+            <!-- 秘密情報対象 -->
+            <div class="form-section">
+                <label style="font-weight: 700; font-size: 0.98rem; color: var(--primary-color);">【対象となる秘密情報の種類】 <span style="color:red;">*</span></label>
+                <div class="checkbox-grid">
+                    <label class="checkbox-card"><input type="checkbox" name="item_type" value="会話（口頭でのやり取り）" checked> 会話（口頭でのやり取り）</label>
+                    <label class="checkbox-card"><input type="checkbox" name="item_type" value="書類（紙媒体の資料など）" checked> 書類（紙媒体の資料など）</label>
+                    <label class="checkbox-card"><input type="checkbox" name="item_type" value="物（サンプル・機材・商品など）" checked> 物（サンプル・機材等）</label>
+                    <label class="checkbox-card"><input type="checkbox" name="item_type" value="データ（電子ファイル・クラウド等）" checked> データ（電子ファイル等）</label>
+                </div>
+                <div style="margin-top: 8px;">
+                    <input type="text" id="item_other" class="form-control" placeholder="その他特記事項があれば入力（例: 開発中のシステム仕様）">
+                </div>
+            </div>
+
+            <div id="special-fields" class="form-section" style="display:none;"></div>
+
+            <!-- 法的承諾 -->
+            <div class="consent-check-group" style="background: #fdf2f2; border-color: #f87171;">
+                <p style="font-size: 0.9rem; margin-bottom: 8px; color: #333; line-height: 1.7;">
+                    署名する前に、契約の目的、秘密情報の範囲、義務の期間、返還・消去、損害賠償および紛争時の取扱いを両当事者で確認してください。未成年者が当事者となる場合は、法定代理人の同意等を確認してください。
+                </p>
+                <label style="color: #222;">
+                    <input type="checkbox" id="legal-agree-check" required>
+                    契約内容を確認し、必要な同意・承認を得たうえで署名します。 <span style="color:red;">*</span>
+                </label>
+            </div>
+
+            <!-- 日付選択 -->
+            <div class="form-group" style="max-width: 250px; margin-top: 20px;">
+                <label for="contract-date">契約締結日 <span class="required">*</span></label>
+                <input type="date" id="contract-date" class="form-control" required>
+            </div>
+
+            <hr style="margin: 25px 0; border: none; border-top: 1px solid var(--border-color);">
+
+            <!-- 受領者署名ブロック -->
+            <h3 id="party-a-heading" style="font-size: 1.05rem; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 4px; margin-bottom: 14px;">
+                【当事者Aの情報・署名】
+            </h3>
+            <div class="form-group">
+                <label for="recipient-name">氏名 / 法人名 <span class="required">*</span></label>
+                <input type="text" id="recipient-name" class="form-control" placeholder="例: 山田 太郎" required>
+            </div>
+            <div class="form-group">
+                <label for="recipient-address">住所 <span class="required">*</span></label>
+                <div class="input-with-btn">
+                    <input type="text" id="recipient-address" class="form-control" placeholder="例: 東京都千代田区1-1-1" required>
+                    <button type="button" class="btn-map" onclick="openMapModal('recipient-address')">📍 マップで指定</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="recipient-contact">連絡先 <span class="required">*</span></label>
+                <input type="text" id="recipient-contact" class="form-control" placeholder="例: 090-0000-0000" required>
+            </div>
+            <div class="form-group">
+                <label id="signature-a-label">当事者A 手書き署名 <span class="required">*</span> <span style="font-size:0.8rem; font-weight:normal; color:#666;">(枠内に指やペンで書いてください)</span></label>
+                <div class="signature-block">
+                    <div class="canvas-wrapper" id="recipient-canvas-wrapper">
+                        <div class="canvas-placeholder" id="recipient-placeholder">✍️ 当事者Aの署名をここに記入してください</div>
+                        <canvas id="recipient-sig-pad" class="sig-canvas"></canvas>
+                    </div>
+                    <div class="signature-tools">
+                        <button type="button" class="btn-tool" onclick="clearCanvas('recipient')">クリア</button>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="margin: 25px 0; border: none; border-top: 1px solid var(--border-color);">
+
+            <!-- 開示者署名ブロック（個人情報は初期値空欄） -->
+            <h3 id="party-b-heading" style="font-size: 1.05rem; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); padding-bottom: 4px; margin-bottom: 14px;">
+                【当事者Bの情報・署名】
+            </h3>
+            <div class="form-group">
+                <label for="issuer-name">当事者B 氏名 / 法人名 <span class="required">*</span></label>
+                <input type="text" id="issuer-name" class="form-control" value="" placeholder="当事者Bの氏名または法人名" required>
+            </div>
+            <div class="form-group">
+                <label for="issuer-address">当事者B 住所 <span class="required">*</span></label>
+                <div class="input-with-btn">
+                    <input type="text" id="issuer-address" class="form-control" placeholder="例: 沖縄県那覇市..." value="" required>
+                    <button type="button" class="btn-map" onclick="openMapModal('issuer-address')">📍 マップで指定</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="issuer-contact">当事者B 連絡先 <span style="font-size:0.8rem; color:#666; font-weight:normal;">(任意入力)</span></label>
+                <input type="text" id="issuer-contact" class="form-control" placeholder="例: 090-XXXX-XXXX" value="">
+            </div>
+            <div class="form-group">
+                <label id="signature-b-label">当事者B 手書き署名 <span class="required">*</span> <span style="font-size:0.8rem; font-weight:normal; color:#666;">(枠内に指やペンで書いてください)</span></label>
+                <div class="signature-block">
+                    <div class="canvas-wrapper" id="issuer-canvas-wrapper">
+                        <div class="canvas-placeholder" id="issuer-placeholder">✍️ 当事者Bの署名をここに記入してください</div>
+                        <canvas id="issuer-sig-pad" class="sig-canvas"></canvas>
+                    </div>
+                    <div class="signature-tools">
+                        <button type="button" class="btn-tool" onclick="clearCanvas('issuer')">クリア</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" onclick="goToStep(1)">戻る</button>
+                <button type="button" class="btn btn-primary" onclick="validateAndGoToStep3()">プレビューを確認する (STEP 3)</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ==================== STEP 3: A4プレビュー＆PDF出力 ==================== -->
+    <div class="step-content" id="step3">
+        <div class="no-print" style="margin-bottom: 18px; text-align: center; background: #eef5ff; padding: 14px; border-radius: var(--radius-md); border: 1px solid #b6d4fe;">
+            <p style="font-weight: 700; color: var(--primary-color); font-size: 1rem; margin-bottom: 4px;">
+                契約書の入力内容を確認してください
+            </p>
+            <p style="font-size: 0.85rem; color: #4b5563;">
+                内容を確認し、「A4 PDFとして保存」を押してください。内容量に応じて複数ページで保存されます。
+            </p>
+        </div>
+
+        <!-- A4プレビュー領域 -->
+        <div class="preview-outer">
+            <div class="contract-paper" id="pdf-target">
+                <div class="paper-main">
+                    <div class="contract-header-title">機密保持契約書</div>
+
+                    <p class="contract-p">
+                        当事者Aおよび当事者Bは、下記の契約目的に関連して相互に開示・受領する秘密情報について、秘密を保持し、相手方の事前承諾なく第三者に開示・漏えいせず、また契約目的以外に使用しないことを相互に誓約します。
+                    </p>
+
+                    <div class="contract-section-heading">契約内容</div>
+                    <div class="contract-box">
+                        <div class="paper-field-label">契約の目的・対象業務</div>
+                        <p id="preview-purpose" class="purpose-preview"></p>
+                    </div>
+
+                    <div class="contract-box">
+                        <div class="paper-field-label">秘密情報の種類（該当するもの）</div>
+                        <ul class="contract-box-list" id="preview-items-list"></ul>
+                    </div>
+
+                    <p class="contract-p paper-commitment">
+                        本書により、両当事者は相互に秘密保持義務を負うことを確認し、本書記載の内容に合意します。
+                    </p>
+                    <div class="paper-consent" id="preview-consent">☐ 上記の内容を確認し、相互契約として承諾しました。</div>
+                    <div class="contract-date-display" id="preview-date">契約日：令和 年 月 日</div>
+                </div>
+
+                <div class="paper-parties">
+                    <section class="paper-party">
+                        <div class="party-role-badge">【当事者A】</div>
+                        <div class="paper-party-row"><strong>氏名・名称：</strong><span id="preview-recipient-name"></span></div>
+                        <div class="paper-party-row"><strong>住所：</strong><span id="preview-recipient-address"></span></div>
+                        <div class="paper-party-row"><strong>連絡先：</strong><span id="preview-recipient-contact"></span></div>
+                        <div class="paper-signature-row"><strong>署名／押印：</strong><div class="party-sig-area"><img id="preview-recipient-sig" class="sig-image-render" src="" alt="当事者A署名"></div></div>
+                    </section>
+
+                    <section class="paper-party">
+                        <div class="party-role-badge">【当事者B】</div>
+                        <div class="paper-party-row"><strong>氏名・名称：</strong><span id="preview-issuer-name"></span></div>
+                        <div class="paper-party-row"><strong>住所：</strong><span id="preview-issuer-address"></span></div>
+                        <div class="paper-party-row"><strong>連絡先：</strong><span id="preview-issuer-contact"></span></div>
+                        <div class="paper-signature-row"><strong>署名／押印：</strong><div class="party-sig-area"><img id="preview-issuer-sig" class="sig-image-render" src="" alt="当事者B署名"></div></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <section class="no-print evidence-panel" aria-labelledby="evidence-title">
+            <h3 id="evidence-title">署名記録・改ざん検証</h3>
+            <p class="evidence-warning">このページ内で作成する記録は補助的な証跡です。端末内だけで作成・保存するため、本人確認・公的な時刻証明・改ざん不能な監査ログを保証するものではありません。個人情報を含む記録は安全な場所に保管してください。</p>
+            <div class="evidence-grid">
+                <div class="evidence-card">
+                    <strong>契約記録</strong>
+                    <p>契約内容・署名画像・署名時刻（端末時刻）・操作履歴をJSON形式で書き出します。</p>
+                    <button type="button" class="btn btn-primary" onclick="downloadEvidenceManifest()">署名記録をJSON保存</button>
+                </div>
+                <div class="evidence-card">
+                    <strong>PDFのハッシュ値</strong>
+                    <p>保存したPDFを選択するとSHA-256を計算します。同じPDFかどうかを後から照合できます。</p>
+                    <input type="file" id="pdf-hash-file" accept="application/pdf,.pdf">
+                    <button type="button" class="btn btn-secondary" onclick="hashSelectedPDF()">選択したPDFを検証</button>
+                    <output id="pdf-hash-result" class="hash-output">PDF未選択</output>
+                    <button type="button" class="btn btn-tool" onclick="downloadPdfHashReceipt()" id="download-hash-receipt" disabled>PDFハッシュ記録を保存</button>
+                </div>
+                <div class="evidence-card">
+                    <strong>署名記録の整合性確認</strong>
+                    <p>以前に保存したJSON記録を読み込み、記録内容とSHA-256値が一致するか確認します。</p>
+                    <input type="file" id="manifest-verify-file" accept="application/json,.json">
+                    <button type="button" class="btn btn-secondary" onclick="verifyEvidenceManifest()">JSON記録を検証</button>
+                    <output id="manifest-verify-result" class="hash-output">記録未選択</output>
+                </div>
+            </div>
+            <div class="evidence-meta" id="evidence-meta">署名記録はSTEP 3に進んだ時点で作成されます。</div>
+        </section>
+
+        <div class="btn-group no-print">
+            <button type="button" class="btn btn-secondary" onclick="goToStep(2)">修正する (STEP 2へ)</button>
+            <button type="button" class="btn btn-success" onclick="generateA4PDF()">📄 A4 PDFとして保存 / 印刷</button>
+        </div>
+    </div>
+</div>
+
+<!-- 地図指定モーダル -->
+<div class="modal-overlay" id="map-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📍 マップから位置・住所を指定</h3>
+            <button type="button" class="modal-close" onclick="closeMapModal()">&times;</button>
+        </div>
+        <p style="font-size:0.85rem; color:#666;">地図上をクリック（またはタップ）してピンを立てると、住所が自動取得されます。</p>
+        <div id="map-container"></div>
+        <div class="map-address-preview" id="map-address-result">
+            位置を選択してください...
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" class="btn btn-secondary" onclick="closeMapModal()">キャンセル</button>
+            <button type="button" class="btn btn-primary" onclick="confirmAddressSelection()">この住所を入力する</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 状態管理
+    const pads = {
+        recipient: { canvas: null, ctx: null, isDrawing: false, hasSig: false, signedAt: null },
+        issuer: { canvas: null, ctx: null, isDrawing: false, hasSig: false, signedAt: null }
+    };
+
+    let maxVisitedStep = 1;
+    let targetAddressInputId = '';
+    let leafletMap = null;
+    let selectedMarker = null;
+    let fetchedAddress = '';
+    const auditEvents = [];
+    let evidenceManifest = null;
+    let pdfHashReceipt = null;
+    let contractSnapshotAtSigning = null;
+    const businessPreviewTemplate = document.getElementById('pdf-target').innerHTML;
+    const businessTermsTemplate = document.querySelector('.terms-box').innerHTML;
+    let currentDocumentType = 'business';
+
+    const privateTermsHTML = `
+        <h3 style="text-align:center;">プライベート用秘密保持契約書 条項</h3>
+        <p>【あなたの氏名】（以下「甲」という）と、【友人の氏名】（以下「乙」という）は、甲が乙に対して開示する秘密情報の取り扱いに関し、次の通り契約（以下「本契約」という）を締結する。</p>
+        <h3>第1条（目的）</h3><p>本契約は、甲が乙に対し、甲の極めてプライベートな情報または重大な関心事（以下「秘密情報」という）を開示するにあたり、乙が遵守すべき秘密保持義務を定めることを目的とする。</p>
+        <h3>第2条（秘密情報の定義）</h3><p>本契約において「秘密情報」とは、口頭、書面、電子データ、その他いかなる媒体や方法であるかを問わず、甲が乙に対して開示または共有した一切の情報（個人のプライベートに関する事実、経緯、背景、人間関係、その他当事者間で秘密と認識されるすべての事象）をいう。</p>
+        <h3>第3条（秘密保持義務）</h3><ol><li>乙は、秘密情報を厳重に管理し、甲の事前の書面による承諾なしに、第三者（共通の友人、家族、知人、その他一切の個人または法人）に対して開示、漏洩、または第三者が閲覧できる状態にしてはならない。</li><li>乙は、電子的媒体（LINE等のメッセージアプリ、X・Instagram等のSNS、ブログ、匿名掲示板、その他インターネット上のあらゆるプラットフォーム）への投稿・書き込み・転載を行ってはならない。</li></ol>
+        <h3>第4条（有効期間）</h3><p>本契約の有効期間は、本契約締結日から<span data-private="term"></span>とする。甲乙間の友人関係の変更、解消、その他の事由によっても、本契約に基づく乙の秘密保持義務は消滅しない。</p>
+        <h3>第5条（違約金および損害賠償）</h3><ol><li>乙が本契約の規定に違反し、秘密情報を第三者に漏洩した場合、乙は甲に対し、違約金（損害賠償額の予定）として<span data-private="penalty"></span>を直ちに支払わなければならない。</li><li>乙の違反行為により甲に生じた実損害額が前項の違約金を超過する場合、甲は乙に対し、その超過額について追加で損害賠償を請求することができる。</li><li>乙は、漏洩した情報を自己の責任と費用において速やかに回収し、拡散防止のための最善の措置を講じなければならない。</li></ol>
+        <h3>第6条（管轄裁判所）</h3><p>本契約に関して甲乙間に紛争が生じた場合、<span data-private="court"></span>を管轄する地方裁判所または簡易裁判所を第一審の合意管轄裁判所とする。</p>
+        <p>本契約の成立を証するため、本書面を2通作成し、甲乙双方が署名または記名押印の上、各自1通を保有する。</p>`;
+    const loanTermsHTML = `
+        <h3 style="text-align:center;">借用書</h3>
+        <p>借主は貸主から下記金額を借り受け、記載の条件に従って返済することを確認します。</p>
+        <h3>借入れおよび返済条件</h3>
+        <p>借用金額、借入日、返済期限、利息、返済方法その他の条件は、STEP 2で入力した内容によります。</p>
+        <p>借主は返済期限までに、貸主が指定する方法で返済します。条件に変更が必要な場合は、貸主・借主双方で話し合い、書面等で確認します。</p>
+        <p>本書面を2通作成し、貸主・借主双方が署名のうえ各自1通を保有します。</p>`;
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+
+    function changeDocumentType() {
+        const type = document.getElementById('document-type').value;
+        currentDocumentType = type;
+        const terms = document.querySelector('.terms-box');
+        const heading = document.getElementById('terms-heading');
+        const help = document.getElementById('document-type-help');
+        const purposeGroup = document.getElementById('contract-purpose').closest('.form-section');
+        const itemsGroup = document.querySelector('input[name="item_type"]').closest('.form-section');
+        const special = document.getElementById('special-fields');
+
+        if (type === 'business') {
+            terms.innerHTML = businessTermsTemplate;
+            heading.textContent = '機密保持契約利用規約の確認';
+            help.textContent = 'ビジネス上の情報を相互に開示・受領する場合に使用します。既存の条項・内容は変更していません。';
+            purposeGroup.style.display = '';
+            itemsGroup.style.display = '';
+            special.style.display = 'none'; special.innerHTML = '';
+            document.getElementById('contract-purpose').required = true;
+            document.getElementById('party-a-heading').textContent = '【当事者Aの情報・署名】';
+            document.getElementById('party-b-heading').textContent = '【当事者Bの情報・署名】';
+            document.querySelector('label[for="recipient-name"]').textContent = '氏名 / 法人名 *';
+            document.querySelector('label[for="issuer-name"]').textContent = '当事者B 氏名 / 法人名 *';
+        } else if (type === 'private') {
+            terms.innerHTML = privateTermsHTML;
+            heading.textContent = 'プライベート用秘密保持契約書の条項確認';
+            help.textContent = '甲が開示するプライベート情報について、乙が秘密保持義務を負う契約です。提示された条項を反映しています。';
+            purposeGroup.style.display = 'none'; itemsGroup.style.display = 'none';
+            document.getElementById('contract-purpose').required = false;
+            special.style.display = '';
+            special.innerHTML = `<h3>契約条件</h3>
+                <label for="private-term">有効期間</label><input class="form-control" id="private-term" value="無期限" required>
+                <label for="private-penalty" style="margin-top:10px;">違約金</label><input class="form-control" id="private-penalty" value="金＿＿万円" required>
+                <label for="private-court" style="margin-top:10px;">管轄の市区町村名</label><input class="form-control" id="private-court" placeholder="例：那覇市" required>`;
+            document.getElementById('party-a-heading').textContent = '【甲（情報を開示する人）の情報・署名】';
+            document.getElementById('party-b-heading').textContent = '【乙（秘密保持義務を負う人）の情報・署名】';
+            document.querySelector('label[for="recipient-name"]').textContent = '甲の氏名 *';
+            document.querySelector('label[for="issuer-name"]').textContent = '乙の氏名 *';
+        } else {
+            terms.innerHTML = loanTermsHTML;
+            heading.textContent = '借用書の内容確認';
+            help.textContent = '貸主・借主、借用金額、返済期限などを入力して、双方が署名する借用書を作成します。';
+            purposeGroup.style.display = 'none'; itemsGroup.style.display = 'none';
+            document.getElementById('contract-purpose').required = false;
+            special.style.display = '';
+            special.innerHTML = `<h3>借入れ・返済条件</h3>
+                <label for="loan-amount">借用金額（円） *</label><input class="form-control" type="number" min="1" step="1" id="loan-amount" placeholder="例：10000" required>
+                <label for="loan-date" style="margin-top:10px;">借入日 *</label><input class="form-control" type="date" id="loan-date" required>
+                <label for="loan-due" style="margin-top:10px;">返済期限 *</label><input class="form-control" type="date" id="loan-due" required>
+                <label for="loan-interest" style="margin-top:10px;">利息</label><input class="form-control" id="loan-interest" value="無利息">
+                <label for="loan-late" style="margin-top:10px;">遅延損害金（任意）</label><input class="form-control" id="loan-late" placeholder="例：年○％／定めない">
+                <label for="loan-method" style="margin-top:10px;">返済方法 *</label><input class="form-control" id="loan-method" placeholder="例：現金手渡し、銀行振込" required>
+                <label for="loan-note" style="margin-top:10px;">特約・備考</label><textarea class="form-control" id="loan-note" rows="2" placeholder="必要な場合のみ入力"></textarea>`;
+            document.getElementById('party-a-heading').textContent = '【貸主の情報・署名】';
+            document.getElementById('party-b-heading').textContent = '【借主の情報・署名】';
+            document.querySelector('label[for="recipient-name"]').textContent = '貸主の氏名 *';
+            document.querySelector('label[for="issuer-name"]').textContent = '借主の氏名 *';
+        }
+        const termsConsentText = document.getElementById('terms-consent-text');
+        const step2Intro = document.getElementById('step2-intro');
+        if (type === 'business') {
+            termsConsentText.textContent = '上記「機密保持契約利用規約」の全条項を確認し、すべて同意します。';
+            step2Intro.innerHTML = '<strong>相互契約：</strong> 当事者A・Bの双方が、情報を開示するときは開示当事者、受領するときは受領当事者となり、同じ義務を相互に負います。契約目的は具体的に記入してください。';
+            document.getElementById('signature-a-label').childNodes[0].textContent = '当事者A 手書き署名 ';
+            document.getElementById('signature-b-label').childNodes[0].textContent = '当事者B 手書き署名 ';
+        } else if (type === 'private') {
+            termsConsentText.textContent = '上記プライベート用秘密保持契約書の条項を確認しました。';
+            step2Intro.innerHTML = '<strong>プライベート用：</strong> 甲が秘密情報を開示し、乙が秘密保持義務を負う一方向の契約です。';
+            document.getElementById('signature-a-label').childNodes[0].textContent = '甲 手書き署名 ';
+            document.getElementById('signature-b-label').childNodes[0].textContent = '乙 手書き署名 ';
+        } else {
+            termsConsentText.textContent = '上記借用書の内容を確認しました。';
+            step2Intro.innerHTML = '<strong>借用書：</strong> 貸主・借主の双方が借入れと返済条件を確認して署名します。';
+            document.getElementById('signature-a-label').childNodes[0].textContent = '貸主 手書き署名 ';
+            document.getElementById('signature-b-label').childNodes[0].textContent = '借主 手書き署名 ';
+        }
+        toggleStep1Next();
+        audit('document_type_changed', { documentType: type });
+    }
+
+    function audit(event, details = {}) {
+        auditEvents.push({
+            sequence: auditEvents.length + 1,
+            event,
+            deviceTime: new Date().toISOString(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+            details
+        });
+    }
+
+    async function sha256Hex(value) {
+        if (!window.crypto || !crypto.subtle) {
+            throw new Error('SHA-256の計算にはHTTPSまたはlocalhostなどの安全な接続が必要です。');
+        }
+        const bytes = typeof value === 'string' ? new TextEncoder().encode(value) : value;
+        const digest = await crypto.subtle.digest('SHA-256', bytes);
+        return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function downloadJson(filename, data) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function safeFilePart(value) {
+        return String(value || 'contract').replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('contract-date').value = today;
+
+        initCanvas('recipient');
+        initCanvas('issuer');
+        audit('application_opened', { userAgent: navigator.userAgent });
+    });
+
+    function canNavigateTo(step) {
+        return step <= maxVisitedStep;
+    }
+
+    function goToStep(stepNumber) {
+        audit('step_opened', { step: stepNumber });
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.step-item').forEach(el => el.classList.remove('active'));
+
+        document.getElementById(`step${stepNumber}`).classList.add('active');
+        document.getElementById(`step-tab-${stepNumber}`).classList.add('active');
+
+        if(stepNumber > maxVisitedStep) {
+            maxVisitedStep = stepNumber;
+        }
+
+        if(stepNumber === 2) {
+            setTimeout(() => {
+                resizeCanvas('recipient');
+                resizeCanvas('issuer');
+            }, 100);
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleStep1Next() {
+        const isChecked = document.getElementById('terms-agree-check').checked;
+        document.getElementById('btn-to-step2').disabled = !isChecked;
+    }
+
+    // 手書きキャンバス処理
+    function initCanvas(key) {
+        const canvas = document.getElementById(`${key}-sig-pad`);
+        const ctx = canvas.getContext('2d');
+        pads[key].canvas = canvas;
+        pads[key].ctx = ctx;
+
+        canvas.addEventListener('pointerdown', (e) => { canvas.setPointerCapture?.(e.pointerId); startDrawing(e, key); });
+        canvas.addEventListener('pointermove', (e) => draw(e, key));
+        canvas.addEventListener('pointerup', (e) => stopDrawing(e, key));
+        canvas.addEventListener('pointerleave', (e) => stopDrawing(e, key));
+        canvas.addEventListener('pointercancel', (e) => stopDrawing(e, key));
+
+        window.addEventListener('resize', () => resizeCanvas(key));
+    }
+
+    function resizeCanvas(key) {
+        const pad = pads[key];
+        if (!pad || !pad.canvas) return;
+
+        const wrapper = document.getElementById(`${key}-canvas-wrapper`);
+        const rect = wrapper.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+
+        let tempImage = null;
+        if (pad.hasSig) {
+            tempImage = pad.canvas.toDataURL();
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        pad.canvas.width = rect.width * dpr;
+        pad.canvas.height = rect.height * dpr;
+        pad.ctx.scale(dpr, dpr);
+
+        pad.ctx.strokeStyle = '#111111';
+        pad.ctx.lineWidth = 3.2;
+        pad.ctx.lineCap = 'round';
+        pad.ctx.lineJoin = 'round';
+
+        if (tempImage) {
+            const img = new Image();
+            img.onload = function() {
+                pad.ctx.drawImage(img, 0, 0, rect.width, rect.height);
+            };
+            img.src = tempImage;
+        }
+    }
+
+    function getPos(e, canvas) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+    }
+
+    function startDrawing(e, key) {
+        const pad = pads[key];
+        pad.isDrawing = true;
+        if (!pad.signedAt) {
+            pad.signedAt = new Date().toISOString();
+            audit('signature_started', { party: key, signedAtDeviceTime: pad.signedAt });
+        }
+        const pos = getPos(e, pad.canvas);
+        pad.ctx.beginPath();
+        pad.ctx.moveTo(pos.x, pos.y);
+        document.getElementById(`${key}-placeholder`).style.display = 'none';
+        pad.hasSig = true;
+    }
+
+    function draw(e, key) {
+        const pad = pads[key];
+        if (!pad.isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e, pad.canvas);
+        pad.ctx.lineTo(pos.x, pos.y);
+        pad.ctx.stroke();
+    }
+
+    function stopDrawing(e, key) {
+        const pad = pads[key];
+        if (pad.isDrawing) {
+            pad.ctx.closePath();
+            pad.isDrawing = false;
+        }
+    }
+
+    function clearCanvas(key) {
+        const pad = pads[key];
+        if (!pad || !pad.ctx) return;
+        pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height);
+        document.getElementById(`${key}-placeholder`).style.display = 'block';
+        pad.hasSig = false;
+        pad.signedAt = null;
+        audit('signature_cleared', { party: key });
+    }
+
+    // 地図指定機能 (Leaflet.js + Nominatim Reverse Geocoding)
+    function openMapModal(inputId) {
+        targetAddressInputId = inputId;
+        document.getElementById('map-modal').style.display = 'flex';
+        document.getElementById('map-address-result').innerText = '地図をクリックしてピンを設置してください...';
+        fetchedAddress = '';
+
+        setTimeout(() => {
+            if (!leafletMap) {
+                // 那覇市中心付近を初期表示（ユーザー位置情報の許可があればそちら）
+                leafletMap = L.map('map-container').setView([26.2124, 127.6809], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(leafletMap);
+
+                leafletMap.on('click', onMapClick);
+
+                // 現在地取得（試行）
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        leafletMap.setView([lat, lng], 15);
+                    }, () => {});
+                }
+            } else {
+                leafletMap.invalidateSize();
+            }
+        }, 150);
+    }
+
+    function closeMapModal() {
+        document.getElementById('map-modal').style.display = 'none';
+    }
+
+    async function onMapClick(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        if (selectedMarker) {
+            leafletMap.removeLayer(selectedMarker);
+        }
+        selectedMarker = L.marker([lat, lng]).addTo(leafletMap);
+
+        document.getElementById('map-address-result').innerText = '住所を取得中...';
+
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ja`);
+            const data = await response.json();
+            
+            if (data && data.address) {
+                const addr = data.address;
+                const province = addr.province || addr.prefecture || addr.state || '';
+                const city = addr.city || addr.ward || addr.town || addr.village || '';
+                const suburb = addr.suburb || addr.neighbourhood || addr.quarter || '';
+                const road = addr.road || '';
+                const houseNumber = addr.house_number || '';
+
+                let fullAddr = `${province}${city}${suburb}${road}${houseNumber}`.trim();
+                if (!fullAddr && data.display_name) {
+                    fullAddr = data.display_name.split(',')[0];
+                }
+
+                fetchedAddress = fullAddr || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                document.getElementById('map-address-result').innerText = `選択住所: ${fetchedAddress}`;
+            } else {
+                fetchedAddress = `緯度:${lat.toFixed(4)}, 経度:${lng.toFixed(4)}`;
+                document.getElementById('map-address-result').innerText = `選択座標: ${fetchedAddress}`;
+            }
+        } catch (err) {
+            fetchedAddress = `緯度:${lat.toFixed(4)}, 経度:${lng.toFixed(4)}`;
+            document.getElementById('map-address-result').innerText = `住所変換エラー（座標を入力）: ${fetchedAddress}`;
+        }
+    }
+
+    function confirmAddressSelection() {
+        if (!fetchedAddress) {
+            alert('地図上で位置を選択してください。');
+            return;
+        }
+        if (targetAddressInputId) {
+            document.getElementById(targetAddressInputId).value = fetchedAddress;
+        }
+        closeMapModal();
+    }
+
+    // バリデーション & プレビューセットアップ
+    async function validateAndGoToStep3() {
+        const form = document.getElementById('contract-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        if (!document.getElementById('legal-agree-check').checked) {
+            alert('法的措置に関する承諾チェックボックスにチェックを入れてください。');
+            return;
+        }
+
+        if (!pads.recipient.hasSig) {
+            alert('【当事者A】の手書き署名を入力してください。');
+            return;
+        }
+
+        if (!pads.issuer.hasSig) {
+            alert('【当事者B】の手書き署名を入力してください。');
+            return;
+        }
+
+        // 書類種別に応じて印刷用レイアウトを切り替える。ビジネス版の既存レイアウトは保持。
+        const pdfTarget = document.getElementById('pdf-target');
+        pdfTarget.innerHTML = businessPreviewTemplate;
+
+        // 日付フォーマット
+        const dateVal = document.getElementById('contract-date').value;
+        if(dateVal) {
+            const d = new Date(dateVal);
+            const year = d.getFullYear();
+            const reiwaYear = year - 2018;
+            const yearStr = reiwaYear === 1 ? '元' : reiwaYear;
+            document.getElementById('preview-date').innerText = `契約日：令和 ${yearStr} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+        }
+
+        // 契約目的
+        document.getElementById('preview-purpose').textContent = document.getElementById('contract-purpose').value.trim();
+
+        // 印刷用契約書には利用規約・詳細条項を収録しない（A4 1枚の合意書形式）。
+        // 当事者A情報
+        document.getElementById('preview-recipient-name').innerText = document.getElementById('recipient-name').value;
+        document.getElementById('preview-recipient-address').innerText = document.getElementById('recipient-address').value;
+        document.getElementById('preview-recipient-contact').innerText = document.getElementById('recipient-contact').value;
+
+        // 当事者B情報
+        document.getElementById('preview-issuer-name').innerText = document.getElementById('issuer-name').value;
+        document.getElementById('preview-issuer-address').innerText = document.getElementById('issuer-address').value || '＿＿＿＿＿＿＿＿＿＿';
+        document.getElementById('preview-issuer-contact').innerText = document.getElementById('issuer-contact').value || '＿＿＿＿＿＿＿＿＿＿';
+
+        // 秘密情報対象
+        const itemsList = document.getElementById('preview-items-list');
+        itemsList.innerHTML = '';
+        const allItems = document.querySelectorAll('input[name="item_type"]');
+        allItems.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `${item.checked ? '☑' : '☐'} ${item.value}`;
+            itemsList.appendChild(li);
+        });
+
+        const otherVal = document.getElementById('item_other').value.trim();
+        if(otherVal) {
+            const li = document.createElement('li');
+            li.textContent = `☑ その他：${otherVal}`;
+            itemsList.appendChild(li);
+        }
+
+        // 電子署名時にチェックした承諾欄も、印刷用契約書へ反映する。
+        const consentChecked = document.getElementById('legal-agree-check').checked;
+        document.getElementById('preview-consent').textContent =
+            `${consentChecked ? '☑' : '☐'} 上記の内容を確認し、相互契約として承諾しました。`;
+
+        // 署名画像セット
+        document.getElementById('preview-recipient-sig').src = pads.recipient.canvas.toDataURL('image/png');
+        document.getElementById('preview-issuer-sig').src = pads.issuer.canvas.toDataURL('image/png');
+
+        const partyA = {
+            name: document.getElementById('recipient-name').value.trim(),
+            address: document.getElementById('recipient-address').value.trim(),
+            contact: document.getElementById('recipient-contact').value.trim(),
+            signature: pads.recipient.canvas.toDataURL('image/png')
+        };
+        const partyB = {
+            name: document.getElementById('issuer-name').value.trim(),
+            address: document.getElementById('issuer-address').value.trim(),
+            contact: document.getElementById('issuer-contact').value.trim(),
+            signature: pads.issuer.canvas.toDataURL('image/png')
+        };
+        if (currentDocumentType === 'private') {
+            const term = document.getElementById('private-term').value.trim();
+            const penalty = document.getElementById('private-penalty').value.trim();
+            const court = document.getElementById('private-court').value.trim();
+            const dateText = document.getElementById('preview-date').textContent;
+            pdfTarget.innerHTML = `<div class="private-print">
+                <h1>プライベート用秘密保持契約書</h1>
+                <p>${escapeHTML(partyA.name)}（以下「甲」という）と、${escapeHTML(partyB.name)}（以下「乙」という）は、甲が乙に対して開示する秘密情報の取り扱いに関し、次の通り契約を締結する。</p>
+                ${privateTermsHTML.replace('<h3 style="text-align:center;">プライベート用秘密保持契約書 条項</h3>','')
+                    .replace('<span data-private="term"></span>', escapeHTML(term))
+                    .replace('<span data-private="penalty"></span>', escapeHTML(penalty))
+                    .replace('<span data-private="court"></span>', escapeHTML(court))}
+                <p class="private-date">${escapeHTML(dateText)}</p>
+                <div class="private-parties">
+                    <section><h3>甲（開示者）</h3><p>氏名：${escapeHTML(partyA.name)}</p><p>住所：${escapeHTML(partyA.address)}</p><p>連絡先：${escapeHTML(partyA.contact)}</p><p>署名：<img src="${partyA.signature}" alt="甲の署名"></p></section>
+                    <section><h3>乙（受領者）</h3><p>氏名：${escapeHTML(partyB.name)}</p><p>住所：${escapeHTML(partyB.address)}</p><p>連絡先：${escapeHTML(partyB.contact)}</p><p>署名：<img src="${partyB.signature}" alt="乙の署名"></p></section>
+                </div>
+            </div>`;
+        } else if (currentDocumentType === 'loan') {
+            const amount = Number(document.getElementById('loan-amount').value);
+            const loanDate = document.getElementById('loan-date').value;
+            const due = document.getElementById('loan-due').value;
+            const interest = document.getElementById('loan-interest').value.trim() || '別途協議';
+            const method = document.getElementById('loan-method').value.trim();
+            const note = document.getElementById('loan-note').value.trim();
+            const fmt = v => v ? new Date(v + 'T00:00:00').toLocaleDateString('ja-JP') : '未入力';
+            pdfTarget.innerHTML = `<div class="loan-print">
+                <h1>借用書</h1>
+                <p class="loan-intro">借主は貸主から下記金額を借り受け、以下の条件に従って返済することを確認します。</p>
+                <div class="loan-amount">借用金額　金 ${amount.toLocaleString('ja-JP')} 円</div>
+                <table><tr><th>借入日</th><td>${escapeHTML(fmt(loanDate))}</td></tr><tr><th>返済期限</th><td>${escapeHTML(fmt(due))}</td></tr><tr><th>利息</th><td>${escapeHTML(interest)}</td></tr><tr><th>遅延損害金</th><td>${escapeHTML(document.getElementById('loan-late').value.trim() || '定めなし')}</td></tr><tr><th>返済方法</th><td>${escapeHTML(method)}</td></tr><tr><th>特約・備考</th><td>${escapeHTML(note || 'なし')}</td></tr></table>
+                <p>借主は上記返済期限までに、記載の返済方法により返済します。本書の内容を確認し、貸主・借主双方が合意のうえ署名します。</p>
+                <p class="loan-date">${escapeHTML(fmt(dateVal))}　作成</p>
+                <div class="loan-parties">
+                    <section><h3>貸主</h3><p>氏名：${escapeHTML(partyA.name)}</p><p>住所：${escapeHTML(partyA.address)}</p><p>連絡先：${escapeHTML(partyA.contact)}</p><p>署名：<img src="${partyA.signature}" alt="貸主の署名"></p></section>
+                    <section><h3>借主</h3><p>氏名：${escapeHTML(partyB.name)}</p><p>住所：${escapeHTML(partyB.address)}</p><p>連絡先：${escapeHTML(partyB.contact)}</p><p>署名：<img src="${partyB.signature}" alt="借主の署名"></p></section>
+                </div>
+            </div>`;
+        }
+
+        // 署名対象の内容を固定スナップショット化。時刻は各端末の時計に基づく参考記録。
+        contractSnapshotAtSigning = {
+            contractId: (crypto.randomUUID ? crypto.randomUUID() : `C-${Date.now()}-${Math.random().toString(16).slice(2)}`),
+            documentType: currentDocumentType,
+            contractDate: dateVal || '',
+            purpose: document.getElementById('contract-purpose').value.trim(),
+            specialTerms: currentDocumentType === 'private' ? {
+                duration: document.getElementById('private-term').value.trim(),
+                penalty: document.getElementById('private-penalty').value.trim(),
+                court: document.getElementById('private-court').value.trim()
+            } : currentDocumentType === 'loan' ? {
+                amount: document.getElementById('loan-amount').value,
+                loanDate: document.getElementById('loan-date').value,
+                repaymentDue: document.getElementById('loan-due').value,
+                interest: document.getElementById('loan-interest').value,
+                repaymentMethod: document.getElementById('loan-method').value,
+                latePayment: document.getElementById('loan-late').value,
+                note: document.getElementById('loan-note').value
+            } : null,
+            itemTypes: Array.from(document.querySelectorAll('input[name="item_type"]:checked')).map(x => x.value),
+            otherItem: document.getElementById('item_other').value.trim(),
+            partyRoles: currentDocumentType === 'private' ? ['甲（開示者）', '乙（受領者）'] : currentDocumentType === 'loan' ? ['貸主', '借主'] : ['当事者A', '当事者B'],
+            partyA: {
+                name: document.getElementById('recipient-name').value.trim(),
+                address: document.getElementById('recipient-address').value.trim(),
+                contact: document.getElementById('recipient-contact').value.trim(),
+                signatureImage: pads.recipient.canvas.toDataURL('image/png'),
+                signatureStartedAtDeviceTime: pads.recipient.signedAt
+            },
+            partyB: {
+                name: document.getElementById('issuer-name').value.trim(),
+                address: document.getElementById('issuer-address').value.trim(),
+                contact: document.getElementById('issuer-contact').value.trim(),
+                signatureImage: pads.issuer.canvas.toDataURL('image/png'),
+                signatureStartedAtDeviceTime: pads.issuer.signedAt
+            },
+            finalConfirmationDeviceTime: new Date().toISOString(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+            userAgent: navigator.userAgent,
+            note: '端末内で作成された参考記録。本人確認・信頼できる時刻証明・改ざん不能な保管を保証しない。'
+        };
+        audit('contract_snapshot_created', { contractId: contractSnapshotAtSigning.contractId });
+        audit('preview_created', { contractId: contractSnapshotAtSigning.contractId });
+        const meta = document.getElementById('evidence-meta');
+        try {
+            await buildEvidenceManifest();
+            if (meta) meta.textContent = `契約ID: ${contractSnapshotAtSigning.contractId} ／ 記録SHA-256: ${evidenceManifest.integrity.digest} ／ 記録日時は端末時刻です。`;
+        } catch (err) {
+            evidenceManifest = null;
+            if (meta) meta.textContent = `契約ID: ${contractSnapshotAtSigning.contractId} ／ 暗号機能を利用できません: ${err.message}`;
+        }
+
+        goToStep(3);
+    }
+
+    // A4 PDF出力：ブラウザ標準の印刷エンジンを使用
+    // 日本語フォントや手書き署名を画像化せずに描画し、文字崩れを抑える。
+    function generateA4PDF() {
+        audit('print_requested', { contractId: contractSnapshotAtSigning?.contractId || null });
+        const element = document.getElementById('pdf-target');
+        if (!element) {
+            alert('PDFにする契約書が見つかりません。');
+            return;
+        }
+
+        document.body.classList.add('printing-contract', `printing-${currentDocumentType}`);
+        const cleanup = () => {
+            document.body.classList.remove('printing-contract', 'printing-business', 'printing-private', 'printing-loan');
+        };
+        window.addEventListener('afterprint', cleanup, { once: true });
+
+        setTimeout(() => {
+            window.print();
+            // afterprintが発火しないブラウザ向け
+            setTimeout(cleanup, 1500);
+        }, 250);
+    }
+
+    async function buildEvidenceManifest() {
+        if (!contractSnapshotAtSigning) throw new Error('契約スナップショットがありません。');
+        const payload = {
+            schema: 'local-contract-evidence-v1',
+            generatedAtDeviceTime: new Date().toISOString(),
+            contract: contractSnapshotAtSigning,
+            auditEvents: auditEvents.slice(),
+            limitations: [
+                '氏名・連絡先は自己申告であり、本人確認済みではない。',
+                '日時は端末時計に基づき、第三者による時刻証明ではない。',
+                'SHA-256は内容の一致確認用であり、単独では作成者や作成時刻を証明しない。',
+                'このJSONとブラウザ内ログは利用者が編集・削除できる。'
+            ]
+        };
+        const digest = await sha256Hex(JSON.stringify(payload));
+        evidenceManifest = { ...payload, integrity: { algorithm: 'SHA-256', digest } };
+        audit('evidence_manifest_created', { digest });
+        // 生成イベントも含めた最終ログで再計算
+        const finalPayload = { ...payload, auditEvents: auditEvents.slice() };
+        evidenceManifest = { ...finalPayload, integrity: { algorithm: 'SHA-256', digest: await sha256Hex(JSON.stringify(finalPayload)) } };
+        return evidenceManifest;
+    }
+
+    async function downloadEvidenceManifest() {
+        try {
+            if (!contractSnapshotAtSigning) {
+                alert('先に契約内容を確認してSTEP 3へ進んでください。');
+                return;
+            }
+            await buildEvidenceManifest();
+            audit('evidence_manifest_downloaded', { contractId: contractSnapshotAtSigning.contractId });
+            await buildEvidenceManifest();
+            const name = safeFilePart(contractSnapshotAtSigning.partyA.name) + '_' + safeFilePart(contractSnapshotAtSigning.partyB.name);
+            downloadJson(`署名記録_${name}.json`, evidenceManifest);
+        } catch (err) {
+            alert(err.message || '署名記録を作成できませんでした。');
+        }
+    }
+
+    async function hashSelectedPDF() {
+        const input = document.getElementById('pdf-hash-file');
+        const output = document.getElementById('pdf-hash-result');
+        const file = input?.files?.[0];
+        if (!file) { output.textContent = '先に保存済みPDFを選択してください。'; return; }
+        if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+            output.textContent = 'PDFファイルを選択してください。'; return;
+        }
+        try {
+            output.textContent = '計算中...';
+            const digest = await sha256Hex(await file.arrayBuffer());
+            pdfHashReceipt = {
+                schema: 'local-pdf-hash-receipt-v1',
+                fileName: file.name,
+                fileSize: file.size,
+                lastModifiedDeviceTime: new Date(file.lastModified).toISOString(),
+                calculatedAtDeviceTime: new Date().toISOString(),
+                algorithm: 'SHA-256',
+                digest,
+                contractId: contractSnapshotAtSigning?.contractId || null,
+                note: 'この値は選択時点のPDFファイルの同一性確認用。単独では作成者・署名者・作成時刻を証明しない。'
+            };
+            audit('pdf_hashed', { fileName: file.name, digest });
+            output.textContent = `SHA-256: ${digest}`;
+            document.getElementById('download-hash-receipt').disabled = false;
+        } catch (err) {
+            output.textContent = err.message || 'ハッシュ計算に失敗しました。';
+        }
+    }
+
+    function downloadPdfHashReceipt() {
+        if (!pdfHashReceipt) return;
+        downloadJson(`PDFハッシュ_${safeFilePart(pdfHashReceipt.fileName)}.json`, pdfHashReceipt);
+    }
+
+    async function verifyEvidenceManifest() {
+        const input = document.getElementById('manifest-verify-file');
+        const output = document.getElementById('manifest-verify-result');
+        const file = input?.files?.[0];
+        if (!file) { output.textContent = '先に署名記録JSONを選択してください。'; return; }
+        try {
+            const parsed = JSON.parse(await file.text());
+            if (!parsed.integrity?.digest || !parsed.integrity?.algorithm || parsed.integrity.algorithm !== 'SHA-256') {
+                throw new Error('対応するSHA-256記録ではありません。');
+            }
+            const payload = { ...parsed };
+            delete payload.integrity;
+            const actual = await sha256Hex(JSON.stringify(payload));
+            const ok = actual === parsed.integrity.digest;
+            output.textContent = ok
+                ? `整合性OK：SHA-256一致 (${actual})`
+                : `不一致：記録内容またはハッシュ値が変更されています。計算値: ${actual}`;
+            output.style.color = ok ? '#166534' : '#b91c1c';
+        } catch (err) {
+            output.textContent = err.message || 'JSONを検証できませんでした。';
+            output.style.color = '#b91c1c';
+        }
+    }
+
+</script>
+
+</body>
+</html>
